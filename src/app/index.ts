@@ -2,7 +2,7 @@ import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import express from "express";
 import cors from "cors";
-import bodyParser, { BodyParser } from "body-parser";
+import bodyParser from "body-parser";
 import { Tweet } from "./Tweets";
 import { User } from "./User";
 export async function initGraphQl() {
