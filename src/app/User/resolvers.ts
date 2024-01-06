@@ -2,10 +2,19 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const queries = {
-  verifyGoogleToken: (token: any) => {
-    return token;
+  getUserProfile: async (parent: any, { id }: any) => {
+    console.log("it is called-->");
+    const data = await prisma.user.findUnique({
+      where: { id: id },
+      include: {
+        Tweets: true,
+      },
+    });
+    console.log(data);
+    return data;
   },
 };
+
 const mutations = {
   // followUser: async (
   //   parent: any,
@@ -28,27 +37,28 @@ const mutations = {
   //   await redisClient.del(`RECOMMENDED_USERS:${ctx.user.id}`);
   //   return true;
   // },
-  userSignIn: async (parent: any, { email }: any) => {
+  userSignIn: async (parent: any, { payload }: any) => {
     try {
-      console.log(email);
       const getUser = await prisma.user.findUnique({
         where: {
-          email: email,
+          email: payload.email,
         },
       });
-      console.log("--", getUser);
       if (getUser) {
         return getUser.id;
       } else {
         const user = await prisma.user.create({
           data: {
-            email: email,
+            email: payload.email,
+            firstName: payload.firstName,
+            profileImageURL: payload.profileImage,
           },
         });
         console.log(user);
         return user.id;
       }
     } catch (err) {
+      console.log("yes error catced in the resolver block");
       console.log(err);
     }
   },

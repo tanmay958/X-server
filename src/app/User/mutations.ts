@@ -1,4 +1,4 @@
 export const mutations = `#graphql
     
-    userSignIn(email : String !) : ID! 
+    userSignIn(payload : userSingInPayload!) : ID! 
 `;

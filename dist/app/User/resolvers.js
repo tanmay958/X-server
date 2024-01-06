@@ -13,9 +13,17 @@ exports.resolvers = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const queries = {
-    verifyGoogleToken: (token) => {
-        return token;
-    },
+    getUserProfile: (parent, { id }) => __awaiter(void 0, void 0, void 0, function* () {
+        console.log("it is called-->");
+        const data = yield prisma.user.findUnique({
+            where: { id: id },
+            include: {
+                Tweets: true,
+            },
+        });
+        console.log(data);
+        return data;
+    }),
 };
 const mutations = {
     // followUser: async (
@@ -38,22 +46,22 @@ const mutations = {
     //   await redisClient.del(`RECOMMENDED_USERS:${ctx.user.id}`);
     //   return true;
     // },
-    userSignIn: (parent, { email }) => __awaiter(void 0, void 0, void 0, function* () {
+    userSignIn: (parent, { payload }) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            console.log(email);
             const getUser = yield prisma.user.findUnique({
                 where: {
-                    email: email,
+                    email: payload.email,
                 },
             });
-            console.log("--", getUser);
             if (getUser) {
                 return getUser.id;
             }
             else {
                 const user = yield prisma.user.create({
                     data: {
-                        email: email,
+                        email: payload.email,
+                        firstName: payload.firstName,
+                        profileImageURL: payload.profileImage,
                     },
                 });
                 console.log(user);
@@ -61,6 +69,7 @@ const mutations = {
             }
         }
         catch (err) {
+            console.log("yes error catced in the resolver block");
             console.log(err);
         }
     }),

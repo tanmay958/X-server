@@ -18,6 +18,7 @@ const express4_1 = require("@apollo/server/express4");
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const body_parser_1 = __importDefault(require("body-parser"));
+const Tweets_1 = require("./Tweets");
 const User_1 = require("./User");
 function initGraphQl() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -27,20 +28,22 @@ function initGraphQl() {
         const server = new server_1.ApolloServer({
             typeDefs: `
       ${User_1.User.types}
-      
+      ${Tweets_1.Tweet.types} 
       type Mutation {
         ${User_1.User.mutations}
+        ${Tweets_1.Tweet.mutations} 
       }
       type Query {
         ${User_1.User.queries} 
+        ${Tweets_1.Tweet.queries}
       }
 
     
      
     `,
             resolvers: {
-                Mutation: Object.assign({}, User_1.User.resolvers.mutations),
-                Query: Object.assign({}, User_1.User.resolvers.queries),
+                Mutation: Object.assign(Object.assign({}, User_1.User.resolvers.mutations), Tweets_1.Tweet.resolver.mutations),
+                Query: Object.assign(Object.assign({}, User_1.User.resolvers.queries), Tweets_1.Tweet.resolver.queries),
             },
         });
         // Note you must call `start()` on the `ApolloServer`
