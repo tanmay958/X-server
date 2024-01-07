@@ -10,33 +10,61 @@ const queries = {
         Tweets: true,
       },
     });
-    console.log(data);
     return data;
+  },
+  isFollowing: async (
+    parent: any,
+    { followerId, followingId }: { followerId: any; followingId: any }
+  ) => {
+    const data = await prisma.follows.findUnique({
+      where: {
+        followerId_followingId: { followerId, followingId },
+      },
+    });
+    if (data) {
+      return {
+        value: true,
+        message: "yes",
+      };
+    } else
+      return {
+        value: false,
+        message: "no",
+      };
+  },
+  getAllFollower: async (parent: any, { id }: { id: any }) => {
+    const data = await prisma.follows.findMany({
+      where: {
+        followingId: id,
+      },
+      include: {
+        follower: true,
+      },
+    });
+    const followers: any = [];
+    data.map((item: any) => {
+      followers.push(item.follower);
+    });
+    return followers;
+  },
+  getAllFollowing: async (parent: any, { id }: { id: any }) => {
+    const data = await prisma.follows.findMany({
+      where: {
+        followerId: id,
+      },
+      include: {
+        following: true,
+      },
+    });
+    const followings: any = [];
+    data.map((item: any) => {
+      followings.push(item.following);
+    });
+    return followings;
   },
 };
 
 const mutations = {
-  // followUser: async (
-  //   parent: any,
-  //   { to }: { to: string },
-  //   ctx: GraphqlContext
-  // ) => {
-  //   if (!ctx.user || !ctx.user.id) throw new Error("unauthenticated");
-
-  //   await UserService.followUser(ctx.user.id, to);
-  //   await redisClient.del(`RECOMMENDED_USERS:${ctx.user.id}`);
-  //   return true;
-  // },
-  // unfollowUser: async (
-  //   parent: any,
-  //   { to }: { to: string },
-  //   ctx: GraphqlContext
-  // ) => {
-  //   if (!ctx.user || !ctx.user.id) throw new Error("unauthenticated");
-  //   await UserService.unfollowUser(ctx.user.id, to);
-  //   await redisClient.del(`RECOMMENDED_USERS:${ctx.user.id}`);
-  //   return true;
-  // },
   userSignIn: async (parent: any, { payload }: any) => {
     try {
       const getUser = await prisma.user.findUnique({
@@ -60,6 +88,68 @@ const mutations = {
     } catch (err) {
       console.log("yes error catced in the resolver block");
       console.log(err);
+    }
+  },
+
+  follow: async (
+    parent: any,
+    { followerId, followingId }: { followerId: any; followingId: any }
+  ) => {
+    try {
+      const newFollow = await prisma.follows.create({
+        data: {
+          followerId,
+          followingId,
+        },
+      });
+      if (newFollow) {
+        return {
+          success: true,
+          message: "followed successfully",
+        };
+      } else
+        return {
+          success: false,
+          message: newFollow,
+        };
+    } catch (err) {
+      return {
+        success: false,
+        message: err,
+      };
+    }
+  },
+  unfollow: async (
+    parent: any,
+    { followerId, followingId }: { followerId: any; followingId: any }
+  ) => {
+    try {
+      const isFollowing = await prisma.follows.findUnique({
+        where: {
+          followerId_followingId: { followerId, followingId },
+        },
+      });
+      if (isFollowing) {
+        await prisma.follows.delete({
+          where: {
+            followerId_followingId: { followerId, followingId },
+          },
+        });
+        return {
+          success: true,
+          message: "sucessfully unfollowed",
+        };
+      } else {
+        return {
+          success: false,
+          message: "you are not following him",
+        };
+      }
+    } catch (err) {
+      return {
+        success: false,
+        message: err,
+      };
     }
   },
 };

@@ -21,31 +21,58 @@ const queries = {
                 Tweets: true,
             },
         });
-        console.log(data);
         return data;
+    }),
+    isFollowing: (parent, { followerId, followingId }) => __awaiter(void 0, void 0, void 0, function* () {
+        const data = yield prisma.follows.findUnique({
+            where: {
+                followerId_followingId: { followerId, followingId },
+            },
+        });
+        if (data) {
+            return {
+                value: true,
+                message: "yes",
+            };
+        }
+        else
+            return {
+                value: false,
+                message: "no",
+            };
+    }),
+    getAllFollower: (parent, { id }) => __awaiter(void 0, void 0, void 0, function* () {
+        const data = yield prisma.follows.findMany({
+            where: {
+                followingId: id,
+            },
+            include: {
+                follower: true,
+            },
+        });
+        const followers = [];
+        data.map((item) => {
+            followers.push(item.follower);
+        });
+        return followers;
+    }),
+    getAllFollowing: (parent, { id }) => __awaiter(void 0, void 0, void 0, function* () {
+        const data = yield prisma.follows.findMany({
+            where: {
+                followerId: id,
+            },
+            include: {
+                following: true,
+            },
+        });
+        const followings = [];
+        data.map((item) => {
+            followings.push(item.following);
+        });
+        return followings;
     }),
 };
 const mutations = {
-    // followUser: async (
-    //   parent: any,
-    //   { to }: { to: string },
-    //   ctx: GraphqlContext
-    // ) => {
-    //   if (!ctx.user || !ctx.user.id) throw new Error("unauthenticated");
-    //   await UserService.followUser(ctx.user.id, to);
-    //   await redisClient.del(`RECOMMENDED_USERS:${ctx.user.id}`);
-    //   return true;
-    // },
-    // unfollowUser: async (
-    //   parent: any,
-    //   { to }: { to: string },
-    //   ctx: GraphqlContext
-    // ) => {
-    //   if (!ctx.user || !ctx.user.id) throw new Error("unauthenticated");
-    //   await UserService.unfollowUser(ctx.user.id, to);
-    //   await redisClient.del(`RECOMMENDED_USERS:${ctx.user.id}`);
-    //   return true;
-    // },
     userSignIn: (parent, { payload }) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const getUser = yield prisma.user.findUnique({
@@ -71,6 +98,65 @@ const mutations = {
         catch (err) {
             console.log("yes error catced in the resolver block");
             console.log(err);
+        }
+    }),
+    follow: (parent, { followerId, followingId }) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const newFollow = yield prisma.follows.create({
+                data: {
+                    followerId,
+                    followingId,
+                },
+            });
+            if (newFollow) {
+                return {
+                    success: true,
+                    message: "followed successfully",
+                };
+            }
+            else
+                return {
+                    success: false,
+                    message: newFollow,
+                };
+        }
+        catch (err) {
+            return {
+                success: false,
+                message: err,
+            };
+        }
+    }),
+    unfollow: (parent, { followerId, followingId }) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const isFollowing = yield prisma.follows.findUnique({
+                where: {
+                    followerId_followingId: { followerId, followingId },
+                },
+            });
+            if (isFollowing) {
+                yield prisma.follows.delete({
+                    where: {
+                        followerId_followingId: { followerId, followingId },
+                    },
+                });
+                return {
+                    success: true,
+                    message: "sucessfully unfollowed",
+                };
+            }
+            else {
+                return {
+                    success: false,
+                    message: "you are not following him",
+                };
+            }
+        }
+        catch (err) {
+            return {
+                success: false,
+                message: err,
+            };
         }
     }),
 };

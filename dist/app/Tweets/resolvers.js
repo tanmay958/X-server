@@ -35,7 +35,6 @@ const queries = {
         }
     }),
     getPreSignUrl: (parent, { id, imageType }) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log("yes called");
         const typeSupported = ["image/jpeg", "image/jpg", "image/png"];
         if (!typeSupported.includes(imageType))
             return null;
@@ -51,7 +50,6 @@ const queries = {
                 Key: `upload/${id}/tweets-${Date.now()}`,
             });
             const signedURL = yield (0, s3_request_presigner_1.getSignedUrl)(s3Client, putObjectCommand);
-            console.log(signedURL);
             return signedURL;
         }
         else
