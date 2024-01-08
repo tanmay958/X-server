@@ -1,4 +1,4 @@
 export const mutations = `
 #graphql
-    createTweet(payload :  createTweetData!) :  Tweet
+    createTweet(payload :  createTweetData!) :  PostResult
 `;

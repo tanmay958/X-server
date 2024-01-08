@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolvers = void 0;
 const client_1 = require("@prisma/client");
+const Redis_1 = require("../../Client/Redis");
 const prisma = new client_1.PrismaClient();
 const queries = {
     getUserProfile: (parent, { id }) => __awaiter(void 0, void 0, void 0, function* () {
@@ -71,6 +72,9 @@ const queries = {
         return followings;
     }),
     recommend: (parent, { id }) => __awaiter(void 0, void 0, void 0, function* () {
+        const cache = yield Redis_1.redisClient.get(`recommend:${id}`);
+        if (cache)
+            return JSON.parse(cache);
         const followingIds = yield prisma.follows.findMany({
             where: {
                 followerId: id,
@@ -101,6 +105,7 @@ const queries = {
                 recommendation.push(item.following);
             }
         });
+        yield Redis_1.redisClient.set(`recommend:${id}`, JSON.stringify(recommendation));
         return recommendation;
     }),
 };
@@ -140,6 +145,7 @@ const mutations = {
                 },
             });
             if (newFollow) {
+                yield Redis_1.redisClient.del(`recommend:${followerId}`);
                 return {
                     success: true,
                     message: "followed successfully",

@@ -1,5 +1,5 @@
 import { PrismaClient, User } from "@prisma/client";
-
+import { redisClient } from "../../Client/Redis";
 const prisma = new PrismaClient();
 const queries = {
   getUserProfile: async (parent: any, { id }: any) => {
@@ -62,6 +62,8 @@ const queries = {
     return followings;
   },
   recommend: async (parent: any, { id }: { id: any }) => {
+    const cache = await redisClient.get(`recommend:${id}`);
+    if (cache) return JSON.parse(cache);
     const followingIds = await prisma.follows.findMany({
       where: {
         followerId: id,
@@ -97,7 +99,7 @@ const queries = {
         recommendation.push(item.following);
       }
     });
-
+    await redisClient.set(`recommend:${id}`, JSON.stringify(recommendation));
     return recommendation;
   },
 };
@@ -140,6 +142,7 @@ const mutations = {
         },
       });
       if (newFollow) {
+        await redisClient.del(`recommend:${followerId}`);
         return {
           success: true,
           message: "followed successfully",

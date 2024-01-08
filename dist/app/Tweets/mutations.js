@@ -3,5 +3,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.mutations = void 0;
 exports.mutations = `
 #graphql
-    createTweet(payload :  createTweetData!) :  Tweet
+    createTweet(payload :  createTweetData!) :  PostResult
 `;

@@ -1,8 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-
-const prisma = new PrismaClient({ log: ["query", "error"] });
+import { redisClient } from "../../Client/Redis";
+const prisma = new PrismaClient();
 interface CreateTweetPayload {
   userid: number;
   content: string;
@@ -15,6 +15,8 @@ const s3Client = new S3Client({
 const queries = {
   getAllTweets: async () => {
     try {
+      const cachedTweets = await redisClient.get("ALLTWEETS");
+      if (cachedTweets) return JSON.parse(cachedTweets);
       const data = await prisma.tweet.findMany({
         include: {
           author: true,
@@ -23,6 +25,7 @@ const queries = {
           createdAt: "desc",
         },
       });
+      await redisClient.set("ALLTWEETS", JSON.stringify(data));
       return data;
     } catch (err) {
       return err;
@@ -57,6 +60,14 @@ const mutations = {
     { payload }: { payload: CreateTweetPayload }
   ) => {
     try {
+      const isExpired = await redisClient.get(`POST:${payload.userid}`);
+
+      if (isExpired) {
+        return {
+          success: false,
+          message: "only one post in 5s",
+        };
+      }
       const tweet = await prisma.tweet.create({
         data: {
           content: payload.content,
@@ -67,7 +78,12 @@ const mutations = {
           author: true, // Make sure to include the author field
         },
       });
-      return tweet;
+      await redisClient.del("ALLTWEETS");
+      await redisClient.setex(`POST:${payload.userid}`, 10, 1);
+      return {
+        success: true,
+        message: "posted successfully",
+      };
     } catch (err: any) {
       return err;
     }

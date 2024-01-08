@@ -10,4 +10,8 @@ export const types = `#graphql
         imageUrl : String
         author  : User!
     }
+    type PostResult {
+        success :  Boolean 
+        message : String
+    }
 `;

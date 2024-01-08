@@ -13,13 +13,17 @@ exports.resolver = void 0;
 const client_1 = require("@prisma/client");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
-const prisma = new client_1.PrismaClient({ log: ["query", "error"] });
+const Redis_1 = require("../../Client/Redis");
+const prisma = new client_1.PrismaClient();
 const s3Client = new client_s3_1.S3Client({
     region: "ap-south-1",
 });
 const queries = {
     getAllTweets: () => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            const cachedTweets = yield Redis_1.redisClient.get("ALLTWEETS");
+            if (cachedTweets)
+                return JSON.parse(cachedTweets);
             const data = yield prisma.tweet.findMany({
                 include: {
                     author: true,
@@ -28,6 +32,7 @@ const queries = {
                     createdAt: "desc",
                 },
             });
+            yield Redis_1.redisClient.set("ALLTWEETS", JSON.stringify(data));
             return data;
         }
         catch (err) {
@@ -59,6 +64,13 @@ const queries = {
 const mutations = {
     createTweet: (parent, { payload }) => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            const isExpired = yield Redis_1.redisClient.get(`POST:${payload.userid}`);
+            if (isExpired) {
+                return {
+                    success: false,
+                    message: "only one post in 5s",
+                };
+            }
             const tweet = yield prisma.tweet.create({
                 data: {
                     content: payload.content,
@@ -69,7 +81,12 @@ const mutations = {
                     author: true, // Make sure to include the author field
                 },
             });
-            return tweet;
+            yield Redis_1.redisClient.del("ALLTWEETS");
+            yield Redis_1.redisClient.setex(`POST:${payload.userid}`, 10, 1);
+            return {
+                success: true,
+                message: "posted successfully",
+            };
         }
         catch (err) {
             return err;
