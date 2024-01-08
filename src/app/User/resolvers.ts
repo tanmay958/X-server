@@ -3,7 +3,6 @@ import { PrismaClient, User } from "@prisma/client";
 const prisma = new PrismaClient();
 const queries = {
   getUserProfile: async (parent: any, { id }: any) => {
-    console.log("it is called-->");
     const data = await prisma.user.findUnique({
       where: { id: id },
       include: {
@@ -84,10 +83,15 @@ const queries = {
       },
       distinct: ["followingId"],
     });
+    const numeric_FollowingsId: number[] = [];
+    followingIds.map((item: any) => {
+      numeric_FollowingsId.push(item.followingId);
+    });
+
     const recommendation: any = [];
     recommendedUser.map((item: any) => {
       if (
-        !followingIds.includes(item.following.id) &&
+        !numeric_FollowingsId.includes(item.following.id) &&
         item.following.id != id
       ) {
         recommendation.push(item.following);
@@ -120,7 +124,6 @@ const mutations = {
         return user.id;
       }
     } catch (err) {
-      console.log("yes error catced in the resolver block");
       console.log(err);
     }
   },

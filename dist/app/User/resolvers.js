@@ -14,7 +14,6 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const queries = {
     getUserProfile: (parent, { id }) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log("it is called-->");
         const data = yield prisma.user.findUnique({
             where: { id: id },
             include: {
@@ -91,9 +90,13 @@ const queries = {
             },
             distinct: ["followingId"],
         });
+        const numeric_FollowingsId = [];
+        followingIds.map((item) => {
+            numeric_FollowingsId.push(item.followingId);
+        });
         const recommendation = [];
         recommendedUser.map((item) => {
-            if (!followingIds.includes(item.following.id) &&
+            if (!numeric_FollowingsId.includes(item.following.id) &&
                 item.following.id != id) {
                 recommendation.push(item.following);
             }
@@ -125,7 +128,6 @@ const mutations = {
             }
         }
         catch (err) {
-            console.log("yes error catced in the resolver block");
             console.log(err);
         }
     }),
