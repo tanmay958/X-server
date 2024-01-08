@@ -4,5 +4,6 @@ export const queries = `#graphql
     isFollowing (followerId : Int! , followingId : Int!) :  IsFollowing !
     getAllFollower(id :Int!)  : [User] 
     getAllFollowing(id:Int!) :  [User] 
+    recommend(id :Int!)  :[User] 
 
 `;

@@ -71,6 +71,35 @@ const queries = {
         });
         return followings;
     }),
+    recommend: (parent, { id }) => __awaiter(void 0, void 0, void 0, function* () {
+        const followingIds = yield prisma.follows.findMany({
+            where: {
+                followerId: id,
+            },
+            select: {
+                followingId: true,
+            },
+        });
+        const recommendedUser = yield prisma.follows.findMany({
+            where: {
+                followerId: {
+                    in: followingIds.map((item) => item.followingId),
+                },
+            },
+            include: {
+                following: true,
+            },
+            distinct: ["followingId"],
+        });
+        const recommendation = [];
+        recommendedUser.map((item) => {
+            if (!followingIds.includes(item.following.id) &&
+                item.following.id != id) {
+                recommendation.push(item.following);
+            }
+        });
+        return recommendation;
+    }),
 };
 const mutations = {
     userSignIn: (parent, { payload }) => __awaiter(void 0, void 0, void 0, function* () {

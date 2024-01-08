@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const queries = {
@@ -61,6 +61,40 @@ const queries = {
       followings.push(item.following);
     });
     return followings;
+  },
+  recommend: async (parent: any, { id }: { id: any }) => {
+    const followingIds = await prisma.follows.findMany({
+      where: {
+        followerId: id,
+      },
+      select: {
+        followingId: true,
+      },
+    });
+
+    const recommendedUser = await prisma.follows.findMany({
+      where: {
+        followerId: {
+          in: followingIds.map((item) => item.followingId),
+        },
+      },
+
+      include: {
+        following: true,
+      },
+      distinct: ["followingId"],
+    });
+    const recommendation: any = [];
+    recommendedUser.map((item: any) => {
+      if (
+        !followingIds.includes(item.following.id) &&
+        item.following.id != id
+      ) {
+        recommendation.push(item.following);
+      }
+    });
+
+    return recommendation;
   },
 };
 
