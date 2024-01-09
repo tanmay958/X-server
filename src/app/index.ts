@@ -9,6 +9,9 @@ export async function initGraphQl() {
   const app = express();
   app.use(bodyParser.json());
   app.use(cors());
+  app.get("/", (req, res) => {
+    res.status(200).json({ message: "healthy" });
+  });
   const server = new ApolloServer({
     typeDefs: `
       ${User.types}
