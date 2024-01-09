@@ -10,7 +10,7 @@ interface CreateTweetPayload {
 }
 
 const s3Client = new S3Client({
-  region: "ap-south-1",
+  region: process.env.AWS_DEFAULT_REGION,
 });
 const queries = {
   getAllTweets: async () => {

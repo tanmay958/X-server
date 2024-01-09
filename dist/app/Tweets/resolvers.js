@@ -16,7 +16,7 @@ const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
 const Redis_1 = require("../../Client/Redis");
 const prisma = new client_1.PrismaClient();
 const s3Client = new client_s3_1.S3Client({
-    region: "ap-south-1",
+    region: process.env.AWS_DEFAULT_REGION,
 });
 const queries = {
     getAllTweets: () => __awaiter(void 0, void 0, void 0, function* () {

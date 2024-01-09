@@ -6,7 +6,11 @@ const queries = {
     const data = await prisma.user.findUnique({
       where: { id: id },
       include: {
-        Tweets: true,
+        Tweets: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
     });
     return data;
@@ -99,6 +103,28 @@ const queries = {
         recommendation.push(item.following);
       }
     });
+    const dummydata = [
+      {
+        email: "tanmay.nitt@gmail.com",
+        profileImageURL: "https://avatars.githubusercontent.com/u/29747452?v=4",
+        id: "1",
+        firstName: "sanket singh",
+      },
+      {
+        email: "harkiratsingh@gmail.com",
+        profileImageURL: "https://avatars.githubusercontent.com/u/8079861?v=4",
+        id: "2",
+        firstName: "Harkirat Singh",
+      },
+      {
+        email: "hussain.naseer@gmail.com",
+        profileImageURL: "https://avatars.githubusercontent.com/u/3898305?v=4",
+        id: "3",
+        firstName: "Hussein Nasser",
+      },
+    ];
+    for (let i = 0; i < dummydata.length; i++)
+      recommendation.push(dummydata[i]);
     await redisClient.set(`recommend:${id}`, JSON.stringify(recommendation));
     return recommendation;
   },
@@ -122,12 +148,10 @@ const mutations = {
             profileImageURL: payload.profileImage,
           },
         });
-        console.log(user);
+
         return user.id;
       }
-    } catch (err) {
-      console.log(err);
-    }
+    } catch (err) {}
   },
 
   follow: async (
